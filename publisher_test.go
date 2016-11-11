@@ -174,7 +174,7 @@ func TestPublisher_serve_errors(t *testing.T) {
 func TestNewPublisher(t *testing.T) {
 	var called bool
 
-	NewPublisher("", "", func(*Publisher) {
+	NewPublisher(func(*Publisher) {
 		called = true
 	})
 
@@ -187,15 +187,15 @@ func TestPublisher_Publish(t *testing.T) {
 	var ok bool
 	testBuf := []byte("test1")
 	tpl1 := amqp.Publishing{AppId: "app1"}
-	msg1 := amqp.Publishing{AppId: "app2", Body: testBuf}
+	msg1 := Publishing{Publishing: amqp.Publishing{AppId: "app2", Body: testBuf}}
 	p := newTestPublisher(PublishingTemplate(tpl1))
 	testErr := errors.New("testing error")
 
 	go func() {
 		envelop := <-p.pubChan
 		msg := <-envelop.pub
-		if bytes.Compare(msg.Body, testBuf) == 0 {
-			if msg.AppId == "app2" {
+		if bytes.Compare(msg.Publishing.Body, testBuf) == 0 {
+			if msg.Publishing.AppId == "app2" {
 				ok = true
 			}
 		}
@@ -213,7 +213,7 @@ func TestPublisher_Publish(t *testing.T) {
 }
 
 func TestPublisher_PublishWithStop(t *testing.T) {
-	msg1 := amqp.Publishing{Body: []byte("test1")}
+	msg1 := Publishing{Publishing: amqp.Publishing{Body: []byte("test1")}}
 	p := newTestPublisher()
 
 	go func() {
@@ -235,8 +235,8 @@ func TestPublisher_Write(t *testing.T) {
 	go func() {
 		envelop := <-p.pubChan
 		msg := <-envelop.pub
-		if bytes.Compare(msg.Body, testBuf) == 0 {
-			if msg.AppId == "app1" {
+		if bytes.Compare(msg.Publishing.Body, testBuf) == 0 {
+			if msg.Publishing.AppId == "app1" {
 				ok = true
 			}
 		}
@@ -270,5 +270,5 @@ func TestPublishingTemplate(t *testing.T) {
 }
 
 func newTestPublisher(opts ...PublisherOpt) *Publisher {
-	return NewPublisher("", "", opts...)
+	return NewPublisher(opts...)
 }

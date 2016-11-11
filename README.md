@@ -13,7 +13,7 @@ The library uses [atomic.Value](http://golang.org/pkg/sync/atomic/#Value), so Go
 # Documentation
 
 [![GoDoc](https://godoc.org/github.com/LTD-Beget/cony?status.svg)](https://godoc.org/github.com/LTD-Beget/cony)
-[![Build Status](https://travis-ci.org/assembla/cony.svg)](https://travis-ci.org/assembla/cony)
+[![Build Status](https://travis-ci.org/LTD-Beget/cony.svg)](https://travis-ci.org/LTD-Beget/cony)
 
 # Thread-safety
 

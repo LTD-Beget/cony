@@ -43,9 +43,7 @@ func Example() {
 	)
 
 	// declare publisher
-	publisher := cony.NewPublisher(exchange.Name,
-		"ololo.key",
-		cony.PublishingTemplate(amqp.Publishing{
+	publisher := cony.NewPublisher(cony.PublishingTemplate(amqp.Publishing{
 			ContentType: "application/json",
 			AppId:       "app1",
 		}), // template amqp.Publising

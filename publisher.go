@@ -14,15 +14,19 @@ var ErrPublisherDead = errors.New("Publisher is dead")
 // PublisherOpt is a functional option type for Publisher
 type PublisherOpt func(*Publisher)
 
+type Publishing struct {
+	Exchange string
+	Key string
+	Publishing amqp.Publishing
+}
+
 type publishMaybeErr struct {
-	pub chan amqp.Publishing
+	pub chan Publishing
 	err chan error
 }
 
 // Publisher hold definition for AMQP publishing
 type Publisher struct {
-	exchange string
-	key      string
 	tmpl     amqp.Publishing
 	pubChan  chan publishMaybeErr
 	stop     chan struct{}
@@ -40,16 +44,16 @@ type Publisher struct {
 func (p *Publisher) Write(b []byte) (int, error) {
 	pub := p.tmpl
 	pub.Body = b
-	return len(b), p.Publish(pub)
+	return len(b), p.Publish(Publishing{Publishing:pub})
 }
 
 // Publish used to publish custom amqp.Publishing
 //
 // WARNING: this is blocking call, it will not return until connection is
 // available. The only way to stop it is to use Cancel() method.
-func (p *Publisher) Publish(pub amqp.Publishing) error {
+func (p *Publisher) Publish(pub Publishing) error {
 	reqRepl := publishMaybeErr{
-		pub: make(chan amqp.Publishing, 2),
+		pub: make(chan Publishing, 2),
 		err: make(chan error, 2),
 	}
 
@@ -93,11 +97,11 @@ func (p *Publisher) serve(client mqDeleter, ch mqChannel) {
 			msg := <-envelop.pub
 			close(envelop.pub)
 			if err := ch.Publish(
-				p.exchange, // exchange
-				p.key,      // key
+				msg.Exchange, // exchange
+				msg.Key,      // key
 				false,      // mandatory
 				false,      // immediate
-				msg,        // msg amqp.Publishing
+				msg.Publishing,        // msg amqp.Publishing
 			); err != nil {
 				envelop.err <- err
 			}
@@ -107,10 +111,8 @@ func (p *Publisher) serve(client mqDeleter, ch mqChannel) {
 }
 
 // NewPublisher is a Publisher constructor
-func NewPublisher(exchange string, key string, opts ...PublisherOpt) *Publisher {
+func NewPublisher(opts ...PublisherOpt) *Publisher {
 	p := &Publisher{
-		exchange: exchange,
-		key:      key,
 		pubChan:  make(chan publishMaybeErr),
 		stop:     make(chan struct{}),
 	}
